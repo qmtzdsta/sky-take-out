@@ -110,4 +110,20 @@ public class EmployeeController {
         employeeService.startAndStop(status,id);
         return Result.success();
     }
+
+    @GetMapping("/{id}")
+    @ApiOperation("根据id查询员工信息")
+    public Result<Employee> findById(@PathVariable Long id){
+        log.info("根据id查询员工信息,参数{}",id);
+        Employee employee = employeeService.findById(id);
+        return Result.success(employee);
+    }
+
+    @PutMapping
+    @ApiOperation("修改员工信息")
+    public Result updateEmployee(@RequestBody Employee employee){
+        log.info("修改员工信息,参数{}",employee);
+        employeeService.updateEmployee(employee);
+        return Result.success();
+    }
 }

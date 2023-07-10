@@ -1,5 +1,6 @@
 package com.sky.service.impl;
 
+import com.fasterxml.jackson.databind.ser.Serializers;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import com.sky.constant.MessageConstant;
@@ -108,6 +109,26 @@ public class EmployeeServiceImpl implements EmployeeService {
         Employee employee = new Employee();
         employee.setStatus(status);
         employee.setId(id);
+        employeeMapper.update(employee);
+    }
+
+    /**
+     * 查询员工信息根据id
+     * @param id
+     * @return
+     */
+    public Employee findById(Long id){
+        Employee employee = employeeMapper.findById(id);
+        return employee;
+    }
+
+    /**
+     * 员工信息的更新
+     * @param employee
+     */
+    public void updateEmployee(Employee employee){
+        employee.setUpdateUser(BaseContext.getCurrentId());
+        employee.setUpdateTime(LocalDateTime.now());
         employeeMapper.update(employee);
     }
 }
