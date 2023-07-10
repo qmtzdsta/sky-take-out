@@ -97,4 +97,17 @@ public class EmployeeServiceImpl implements EmployeeService {
         Page<Employee> page = employeeMapper.pageQuery(employeePageQueryDTO);
         return new PageResult(page.getTotal(),page.getResult()) ;
     }
+
+    /**
+     * 员工账号的启用和禁用
+     *
+     * @param status
+     * @param id
+     */
+    public void startAndStop(Integer status, Long id){
+        Employee employee = new Employee();
+        employee.setStatus(status);
+        employee.setId(id);
+        employeeMapper.update(employee);
+    }
 }
