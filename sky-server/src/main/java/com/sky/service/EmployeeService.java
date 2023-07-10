@@ -1,9 +1,11 @@
 package com.sky.service;
 
+import com.sky.annotation.Autofill;
 import com.sky.dto.EmployeeDTO;
 import com.sky.dto.EmployeeLoginDTO;
 import com.sky.dto.EmployeePageQueryDTO;
 import com.sky.entity.Employee;
+import com.sky.enumeration.OperationType;
 import com.sky.result.PageResult;
 
 public interface EmployeeService {
@@ -19,6 +21,7 @@ public interface EmployeeService {
      * 新建员工
      * @param employeeDTO
      */
+
     void save(EmployeeDTO employeeDTO);
 
     /**
@@ -35,6 +38,7 @@ public interface EmployeeService {
      * @param status
      * @param id
      */
+
     void startAndStop(Integer status, Long id);
 
     /**
@@ -48,5 +52,6 @@ public interface EmployeeService {
      * 员工信息的更新
      * @param employee
      */
+
     void updateEmployee(Employee employee);
 }
