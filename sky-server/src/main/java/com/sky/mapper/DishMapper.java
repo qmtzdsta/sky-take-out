@@ -30,4 +30,6 @@ public interface DishMapper {
     Dish findByCategoryId(Long id);
 
     Page<DishVO> pageQuery(DishPageQueryDTO dto);
+
+    void update(Dish dish);
 }

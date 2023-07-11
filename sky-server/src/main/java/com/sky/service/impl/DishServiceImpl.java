@@ -77,4 +77,12 @@ public class DishServiceImpl implements DishService {
         Page<DishVO> page = dishMapper.pageQuery(dto);
         return new PageResult(page.getTotal(),page.getResult());
     }
+
+    public void dishStartAndStop(Long id, Integer status){
+        Dish dish = new Dish();
+        dish.setId(id);
+        dish.setStatus(status);
+
+        dishMapper.update(dish);
+    }
 }

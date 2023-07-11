@@ -39,4 +39,6 @@ public interface DishService {
      * @return
      */
     PageResult page(DishPageQueryDTO dto);
+
+    void dishStartAndStop(Long id, Integer status);
 }
