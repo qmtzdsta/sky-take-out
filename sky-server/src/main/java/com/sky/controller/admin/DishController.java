@@ -1,16 +1,16 @@
 package com.sky.controller.admin;
 
 import com.sky.dto.DishDTO;
+import com.sky.dto.DishPageQueryDTO;
+import com.sky.entity.Dish;
+import com.sky.result.PageResult;
 import com.sky.result.Result;
 import com.sky.service.DishService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/admin/dish")
@@ -33,5 +33,45 @@ public class DishController {
         dishService.saveWithFlavor(dto);
         return Result.success();
     }
+
+    /**
+     * 根据id查找菜品
+     * @param id
+     * @return
+     */
+    @GetMapping("/{id}")
+    @ApiOperation("根据id查询菜品")
+    public Result<Dish> findById(@PathVariable Long id ){
+        log.info("根据id查询菜品,{}",id);
+        Dish dish = dishService.findById(id);
+        return Result.success(dish);
+    }
+
+    /**
+     * 根据分类id查询菜品
+     * @param id
+     * @return
+     */
+    @GetMapping("/list")
+    @ApiOperation("根据分类id查询菜品")
+    public Result<Dish> findByCategoryId(Long id){
+        log.info("根据分类id查询菜品,{}",id);
+        Dish dish = dishService.findByCategoryId(id);
+        return Result.success(dish);
+    }
+
+    /**
+     * 菜品的分页查询
+     * @param dto
+     * @return
+     */
+    @GetMapping("/page")
+    @ApiOperation("菜品的分页查询")
+    public Result<PageResult> page(DishPageQueryDTO dto){
+        log.info("菜品的分页查询,参数{}",dto);
+        PageResult page = dishService.page(dto);
+        return Result.success(page);
+    }
+
 
 }
