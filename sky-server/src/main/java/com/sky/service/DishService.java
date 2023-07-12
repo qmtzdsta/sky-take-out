@@ -7,6 +7,7 @@ import com.sky.dto.DishPageQueryDTO;
 import com.sky.entity.Category;
 import com.sky.entity.Dish;
 import com.sky.result.PageResult;
+import com.sky.vo.DishVO;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -24,7 +25,7 @@ public interface DishService {
      * @param id
      * @return
      */
-    Dish findById(Long id);
+    DishVO findById(Long id);
 
     /**
      * 根据分类id查询菜品
@@ -41,4 +42,8 @@ public interface DishService {
     PageResult page(DishPageQueryDTO dto);
 
     void dishStartAndStop(Long id, Integer status);
+
+    void deleteBatch(List<Long> ids);
+
+    void update(DishVO dishVO);
 }
