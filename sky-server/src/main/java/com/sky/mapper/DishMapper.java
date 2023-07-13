@@ -10,6 +10,8 @@ import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 
+import java.util.List;
+
 @Mapper
 public interface DishMapper {
 
@@ -28,7 +30,7 @@ public interface DishMapper {
     Dish findById(Long id);
 
     @Select("select * from dish where category_id = #{id};")
-    Dish findByCategoryId(Long id);
+    List<Dish> findByCategoryId(Long categoryId);
 
     Page<DishVO> pageQuery(DishPageQueryDTO dto);
 

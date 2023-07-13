@@ -32,7 +32,7 @@ public interface DishService {
      * @param id
      * @return
      */
-    Dish findByCategoryId(Long id);
+    List<Dish> findByCategoryId(Long categoryId);
 
     /**
      * 菜品的分页查询

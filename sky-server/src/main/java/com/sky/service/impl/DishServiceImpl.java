@@ -80,9 +80,9 @@ public class DishServiceImpl implements DishService {
      * @param id
      * @return
      */
-    public Dish findByCategoryId(Long id){
-        Dish dish = dishMapper.findByCategoryId(id);
-        return dish;
+    public List<Dish> findByCategoryId(Long categoryId){
+        List<Dish> dishes = dishMapper.findByCategoryId(categoryId);
+        return dishes;
     }
 
     /**
