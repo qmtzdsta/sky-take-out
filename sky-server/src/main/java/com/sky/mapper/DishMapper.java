@@ -29,13 +29,13 @@ public interface DishMapper {
     @Select("select * from dish where id = #{id}")
     Dish findById(Long id);
 
-    @Select("select * from dish where category_id = #{id};")
-    List<Dish> findByCategoryId(Long categoryId);
-
     Page<DishVO> pageQuery(DishPageQueryDTO dto);
 
     void update(Dish dish);
 
     @Delete("delete from dish where id = #{id}")
     void deleteById(Long id);
+
+
+    List<Dish> list(Dish dish);
 }

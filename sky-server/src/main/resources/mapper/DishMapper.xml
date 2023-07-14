@@ -34,5 +34,20 @@
         </where>
     </update>
 
+    <select id="list" resultType="com.sky.entity.Dish">
+        select * from dish
+        <where>
+            <if test="name != null and name != ''"> name = #{name} </if>
+            <if test="categoryId != null"> and category_id = #{categoryId} </if>
+            <if test="image != null and image != ''"> and image = #{image} </if>
+            <if test="description != null and description != ''"> and description = #{description} </if>
+            <if test="status != null"> and status = #{status} </if>
+            <if test="createUser != null"> and create_user = #{createUser} </if>
+            <if test="createTime != null"> and create_time = #{createTime} </if>
+            <if test="updateUser != null"> and update_user = #{updateUser} </if>
+            <if test="updateTime != null"> and update_time = #{updateTime} </if>
+        </where>
+    </select>
+
 
 </mapper>
