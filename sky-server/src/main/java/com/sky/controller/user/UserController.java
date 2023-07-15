@@ -39,6 +39,7 @@ public class UserController {
         User user = userService.WxLogin(userLoginDTO);
 //        生成jwt令牌
         Map<String, Object> claims = new HashMap<>();
+//        log.info("登录用户的id为{}",user.getId());
         claims.put(JwtClaimsConstant.USER_ID,user.getId());
         String jwt = JwtUtil.createJWT(jwtProperties.getUserSecretKey(), jwtProperties.getUserTtl(), claims);
 

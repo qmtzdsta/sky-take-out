@@ -7,14 +7,17 @@ import com.sky.result.PageResult;
 import com.sky.result.Result;
 import com.sky.service.DishService;
 import com.sky.vo.DishVO;
+import com.sun.org.apache.regexp.internal.RE;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Set;
 
 @RestController("adminDishController")
 @RequestMapping("/admin/dish")
@@ -24,6 +27,8 @@ public class DishController {
 
     @Autowired
     private DishService dishService;
+    @Autowired
+    private RedisTemplate redisTemplate;
 
     /**
      * 保存菜品
@@ -35,6 +40,8 @@ public class DishController {
     public Result saveWithFlavor(@RequestBody DishDTO dto){
         log.info("保存菜品，{}",dto);
         dishService.saveWithFlavor(dto);
+        String key = "dish_" + dto.getCategoryId();
+        cleanCache(key);
         return Result.success();
     }
 
@@ -89,6 +96,7 @@ public class DishController {
     public Result dishStartAndStop(@PathVariable Integer status, Long id){
         log.info("菜品的起售和停售,参数{}，{}",status,id);
         dishService.dishStartAndStop(id,status);
+        cleanCache("dish_*");
         return Result.success();
     }
 
@@ -103,6 +111,7 @@ public class DishController {
     public Result deleteBatch(@RequestParam List<Long> ids){
         log.info("菜品的删除，参数{}",ids);
         dishService.deleteBatch(ids);
+        cleanCache("dish_*");
         return Result.success();
     }
 
@@ -116,6 +125,17 @@ public class DishController {
     public Result updateDish(@RequestBody DishVO dishVO){
         log.info("修改菜品，参数{}",dishVO);
         dishService.update(dishVO);
+        cleanCache("dish_*");
         return Result.success();
+    }
+
+    /**
+     * 清除redis之中的缓存
+     * @param pattern
+     */
+    private void cleanCache(String pattern){
+        Set keys = redisTemplate.keys(pattern);
+        Long delete = redisTemplate.delete(keys);
+        log.info("redis返回的数据{}",delete);
     }
 }
