@@ -22,6 +22,7 @@ import com.sky.vo.OrderVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -122,6 +123,20 @@ public class OrderServiceImpl implements OrderService {
         vo.setPackageStr(jsonObject.getString("package"));
 
         return vo;
+    }
+
+    @Override
+    public OrderVO details(Long id) {
+//        查询对应的订单
+        Orders order = orderMapper.findById(id);
+//        根据订单查询对应详情
+        List<OrderDetail> details = orderDetailMapper.findByOrderId(order.getId());
+//        封装为vo对象
+        OrderVO orderVO = new OrderVO();
+        BeanUtils.copyProperties(order,orderVO);
+        orderVO.setOrderDetailList(details);
+
+        return orderVO;
     }
 
     /**
