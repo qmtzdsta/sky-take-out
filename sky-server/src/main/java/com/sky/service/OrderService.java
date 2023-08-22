@@ -34,4 +34,6 @@ public interface OrderService {
      * @return
      */
     OrderVO details(Long id);
+
+    void cancel(Long id) throws Exception;
 }

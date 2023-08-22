@@ -23,6 +23,11 @@ public class OrderController {
     @Autowired
     private OrderService orderService;
 
+    /**
+     * 用户下单
+     * @param ordersSubmitDTO
+     * @return
+     */
     @PostMapping("/submit")
     @ApiOperation("用户下单")
     public Result<OrderSubmitVO> submit(@RequestBody OrdersSubmitDTO ordersSubmitDTO){
@@ -67,10 +72,22 @@ public class OrderController {
      * @return
      */
     @GetMapping("/orderDetail/{id}")
+    @ApiOperation("订单详情查询")
     public Result<OrderVO> details(@PathVariable Long id ){
         log.info("订单详情查询，订单的id为：{}",id);
         OrderVO orderVO = orderService.details(id);
         return Result.success(orderVO);
     }
 
+    /**
+     * 取消订单
+     * @param id
+     * @return
+     */
+    @PutMapping("/cancel/{id}")
+    public Result cancel(@PathVariable Long id ) throws Exception {
+        log.info("取消订单，参数{}",id);
+        orderService.cancel(id);
+        return Result.success();
+    }
 }
