@@ -19,3 +19,12 @@ sky:
   wechat:
     appid: wxe99eb8c147b33dc3
     secret: 38e4eef173a92df227851c670712aff3
+  shop:
+    address: 四川省南充市顺庆区
+  baidu:
+    ak: lZQvwHFRk3jMnWi3vf55z5M1G1s0ZKXw
+
+spring:
+  devtools:
+    restart:
+      exclude: application.yml,application-dev.yml

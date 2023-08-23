@@ -1,14 +1,10 @@
 package com.sky.service.impl;
 
-import com.alibaba.druid.support.json.JSONUtils;
-import com.alibaba.fastjson.JSONObject;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import com.sky.constant.MessageConstant;
 import com.sky.context.BaseContext;
-import com.sky.dto.OrdersPageQueryDTO;
-import com.sky.dto.OrdersPaymentDTO;
-import com.sky.dto.OrdersSubmitDTO;
+import com.sky.dto.*;
 import com.sky.entity.*;
 import com.sky.exception.AddressBookBusinessException;
 import com.sky.exception.OrderBusinessException;
@@ -16,27 +12,23 @@ import com.sky.exception.ShoppingCartBusinessException;
 import com.sky.mapper.*;
 import com.sky.result.PageResult;
 import com.sky.service.OrderService;
+import com.sky.utils.AddressUtil;
 import com.sky.utils.WeChatPayUtil;
 import com.sky.vo.OrderPaymentVO;
+import com.sky.vo.OrderStatisticsVO;
 import com.sky.vo.OrderSubmitVO;
 import com.sky.vo.OrderVO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.RandomStringUtils;
-import org.apache.http.HttpResponse;
-import org.apache.http.entity.ContentType;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
-import javax.servlet.http.HttpServletResponse;
-import javax.xml.ws.Response;
-import java.math.BigDecimal;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -57,6 +49,10 @@ public class OrderServiceImpl implements OrderService {
     private WeChatPayUtil weChatPayUtil;
     @Autowired
     private OrderService orderService;
+    @Value("${sky.shop.address}")
+    private String address;
+    @Autowired
+    private AddressUtil addressUtil;
 
     /**
      * 用户下单
@@ -70,6 +66,9 @@ public class OrderServiceImpl implements OrderService {
         if(addressBook.getId()==null){
             throw new AddressBookBusinessException(MessageConstant.ADDRESS_BOOK_IS_NULL);
         }
+
+        checkoutoutofrange(addressBook.getCityName()+addressBook.getDistrictName()+addressBook.getDetail());
+
         ShoppingCart shoppingCart = new ShoppingCart();
         shoppingCart.setUserId(BaseContext.getCurrentId());
         List<ShoppingCart> list = shoppingCartMapper.list(shoppingCart);
@@ -106,6 +105,14 @@ public class OrderServiceImpl implements OrderService {
         orderSubmitVO.setOrderAmount(orders.getAmount());
         orderSubmitVO.setOrderNumber(orders.getNumber());
         return orderSubmitVO;
+    }
+
+
+//  判断是否距离大于5000m
+    private void checkoutoutofrange(String userAddress) {
+        String origin = addressUtil.geocoding(address);
+        String target = addressUtil.geocoding(userAddress);
+        addressUtil.driving(origin,target);
     }
 
     /**
@@ -275,4 +282,160 @@ public class OrderServiceImpl implements OrderService {
         orderMapper.update(orders);
     }
 
+    /**
+     * 搜索查询订单
+     * @param pageQueryDTO
+     * @return
+     */
+
+    @Override
+    public PageResult serach(OrdersPageQueryDTO pageQueryDTO) {
+
+        PageHelper.startPage(pageQueryDTO.getPage(),pageQueryDTO.getPageSize());
+
+        Page<Orders> page = orderMapper.page(pageQueryDTO);
+
+        List<OrderVO> orderVOList = changeByOrders(page);
+
+        PageResult pageResult = new PageResult(orderVOList.size(), orderVOList);
+        return pageResult;
+    }
+
+    /**
+     * 将orders对象转换为orderVO对像
+     * @param page
+     * @return
+     */
+    private List<OrderVO> changeByOrders(Page<Orders> page) {
+        List<OrderVO> orderVOList = new ArrayList<>();
+
+        if(!CollectionUtils.isEmpty(page)){
+            for (Orders orders : page) {
+                OrderVO orderVO = new OrderVO();
+                BeanUtils.copyProperties(orders,orderVO);
+                String orderDishes = getOrderDishes(orders);
+                orderVO.setOrderDishes(orderDishes);
+                orderVOList.add(orderVO);
+            }
+        }
+
+        return orderVOList;
+    }
+
+    /**
+     * 将订单的所有菜品名称合并为一个字符串
+     * @param orders
+     * @return
+     */
+    private String getOrderDishes(Orders orders) {
+        List<OrderDetail> orderDetailList = orderDetailMapper.findByOrderId(orders.getId());
+
+        List<String> orderDishesList = orderDetailList.stream().map(x->{
+            String item = x.getName()+"*"+x.getNumber();
+            return item;
+        }).collect(Collectors.toList());
+
+        return String.join(";",orderDishesList);
+    }
+
+    /**
+     * 统计订单状态的数量
+     * @return
+     */
+
+    @Override
+    public OrderStatisticsVO statistics() {
+        Integer toBeConfirmed = orderMapper.countStatus(Orders.TO_BE_CONFIRMED);
+        Integer confirmed = orderMapper.countStatus(Orders.CONFIRMED);
+        Integer deliveryInProgress = orderMapper.countStatus(Orders.DELIVERY_IN_PROGRESS);
+
+        OrderStatisticsVO orderStatisticsVO = new OrderStatisticsVO();
+        orderStatisticsVO.setConfirmed(confirmed);
+        orderStatisticsVO.setToBeConfirmed(toBeConfirmed);
+        orderStatisticsVO.setDeliveryInProgress(deliveryInProgress);
+        return orderStatisticsVO;
+    }
+
+    /**
+     * 接单
+     * @param ordersDTO
+     */
+    @Override
+    public void confirmOrders(OrdersConfirmDTO ordersDTO) {
+        Orders orders = new Orders();
+        orders.setId(ordersDTO.getId());
+        orders.setStatus(Orders.CONFIRMED);
+        log.info("{}",orders);
+        orderMapper.update(orders);
+    }
+
+    /**
+     * 拒单
+     * @param ordersRejectionDTO
+     */
+    @Override
+    public void rejectionOrders(OrdersRejectionDTO ordersRejectionDTO) {
+        Orders orders = orderMapper.findById(ordersRejectionDTO.getId());
+
+        if(orders==null||orders.getStatus() != Orders.TO_BE_CONFIRMED){
+            throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        }
+
+        int payStatus = orders.getPayStatus();
+        if(payStatus == Orders.PAID){
+//            代替给用户退款的操作
+            log.info("用户已经退款");
+        }
+
+        orders.setStatus(Orders.CANCELLED);
+        orders.setRejectionReason(ordersRejectionDTO.getRejectionReason());
+        orders.setCancelTime(LocalDateTime.now());
+
+        orderMapper.update(orders);
+    }
+
+    @Override
+    public void cancelByAdmin(OrdersCancelDTO ordersDTO) {
+        Orders orders = orderMapper.findById(ordersDTO.getId());
+
+        if(orders==null||orders.getStatus() != Orders.CONFIRMED){
+            throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        }
+
+        int payStatus = orders.getPayStatus();
+        if(payStatus == Orders.PAID){
+//            代替给用户退款的操作
+            log.info("用户已经退款");
+        }
+
+        orders.setStatus(Orders.CANCELLED);
+        orders.setCancelReason(ordersDTO.getCancelReason());
+        orders.setCancelTime(LocalDateTime.now());
+
+        orderMapper.update(orders);
+    }
+
+    /**
+     * 开始派送订单
+     * @param id
+     */
+    @Override
+    public void send(Long id) {
+        Orders orders = orderMapper.findById(id);
+        if(orders == null || orders.getStatus() != Orders.CONFIRMED){
+            throw  new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        }
+        orders.setStatus(Orders.DELIVERY_IN_PROGRESS);
+        orderMapper.update(orders);
+    }
+
+    @Override
+    public void complete(Long id) {
+        Orders orders = orderMapper.findById(id);
+        if(orders == null || orders.getStatus() != Orders.DELIVERY_IN_PROGRESS){
+            throw  new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        }
+        orders.setStatus(Orders.COMPLETED);
+        orderMapper.update(orders);
+    }
 }
