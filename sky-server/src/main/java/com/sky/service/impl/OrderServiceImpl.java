@@ -35,8 +35,10 @@ import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -142,35 +144,55 @@ public class OrderServiceImpl implements OrderService {
     }
 
     /**
+     * 再来一单
+     * @param id
+     */
+    @Override
+    public void repeat(Long id) {
+        Long userId = BaseContext.getCurrentId();
+
+        List<OrderDetail> orderDetailList = orderDetailMapper.findByOrderId(id);
+
+        List<ShoppingCart> shoppingCartList = orderDetailList.stream().map(x->{
+            ShoppingCart shoppingCart = new ShoppingCart();
+            BeanUtils.copyProperties(x,shoppingCart,"id");
+            shoppingCart.setUserId(userId);
+            shoppingCart.setCreateTime(LocalDateTime.now());
+            return shoppingCart;
+        }).collect(Collectors.toList());
+
+        shoppingCartMapper.insertBatch(shoppingCartList);
+    }
+
+    /**
      * 取消订单
      * @param id
      */
     @Override
     public void cancel(Long id) throws Exception {
 //        获取订单状态
-        Orders order = orderMapper.findById(id);
-        int payStatus = order.getPayStatus();
-// 校验订单是否存在
-        if (order == null) {
+        Orders orderDb = orderMapper.findById(id);
+//        校验订单是否存在
+        if (orderDb == null) {
             throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
         }
 
         //订单状态 1待付款 2待接单 3已接单 4派送中 5已完成 6已取消
-        if (order.getStatus() > 2) {
+        if (orderDb.getStatus() > 2) {
             throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
         }
 
         Orders orders = new Orders();
-        orders.setId(order.getId());
+        orders.setId(orderDb.getId());
 
         // 订单处于待接单状态下取消，需要进行退款
-        if (orders.getStatus().equals(Orders.TO_BE_CONFIRMED)) {
+        if (orderDb.getStatus().equals(Orders.TO_BE_CONFIRMED)) {
             //调用微信支付退款接口
-            weChatPayUtil.refund(
+            /*weChatPayUtil.refund(
                     order.getNumber(), //商户订单号
                     order.getNumber(), //商户退款单号
                     new BigDecimal(0.01),//退款金额，单位 元
-                    new BigDecimal(0.01));//原订单金额
+                    new BigDecimal(0.01));//原订单金额*/
 
             //支付状态修改为 退款
             orders.setPayStatus(Orders.REFUND);

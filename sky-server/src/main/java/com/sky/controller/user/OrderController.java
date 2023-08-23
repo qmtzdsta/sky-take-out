@@ -85,9 +85,21 @@ public class OrderController {
      * @return
      */
     @PutMapping("/cancel/{id}")
-    public Result cancel(@PathVariable Long id ) throws Exception {
+    public Result cancel(@PathVariable("id") Long id ) throws Exception {
         log.info("取消订单，参数{}",id);
         orderService.cancel(id);
+        return Result.success();
+    }
+
+    /**
+     * 再来一单
+     * @param id
+     * @return
+     */
+    @PostMapping("/repetition/{id}")
+    public Result  repetition(@PathVariable("id") Long id ){
+        log.info("再来一单，参数：{}",id);
+        orderService.repeat(id);
         return Result.success();
     }
 }
