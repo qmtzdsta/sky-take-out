@@ -37,7 +37,7 @@ public class OrderTask {
     }
 
     @Scheduled(cron = "0 0 2 * * ?")
-//    @Scheduled(cron = "0/1 * * * * ?")
+//    @Scheduled(cron = "0 * * * * ?")
     public void processDeliveryOrders(){
         log.info("处理派送超时的订单，{}",LocalDateTime.now());
 

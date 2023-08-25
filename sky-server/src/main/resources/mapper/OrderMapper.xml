@@ -69,4 +69,38 @@
         </where>
         order by order_time desc
     </select>
+    <select id="sumBymap" resultType="java.lang.Double">
+        select sum(amount) from orders
+        <where>
+            <if test="begin!=null and end !=null">
+                order_time between #{begin} and #{end}
+            </if>
+            <if test="status!=null">
+                and status = #{status}
+            </if>
+        </where>
+    </select>
+    <select id="countByMap" resultType="java.lang.Integer">
+        select count(id) from orders
+        <where>
+            <if test="begin!=null and end !=null">
+                order_time between #{begin} and #{end}
+            </if>
+            <if test="status!=null">
+                and status = #{status}
+            </if>
+        </where>
+    </select>
+    <select id="top10" resultType="com.sky.dto.GoodsSalesDTO">
+        select od.name name,sum(od.number) number
+        from orders o ,order_detail od
+        <where>
+            o.id = od.order_id and o.status = 5
+            and order_time &gt; #{begin}
+            and order_time &lt; #{end}
+        </where>
+        group by od.name
+        order by number desc
+        limit 0,10
+    </select>
 </mapper>
